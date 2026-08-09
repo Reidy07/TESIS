@@ -1,0 +1,6 @@
+services:
+  - type: web
+    name: evaluador-nist-iso
+    env: docker
+    plan: free
+    dockerfilePath: ./Dockerfile

@@ -1,0 +1,6 @@
+backend/__pycache__/
+backend/evaluador.db
+backend/uploads/
+frontend/dist/
+frontend/node_modules/
+.env
