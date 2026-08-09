@@ -139,29 +139,3 @@ Aplicacion disponible en:
 ```text
 http://127.0.0.1:5173
 ```
-
-## Subir a Render
-
-La forma recomendada para esta tesis es subir todo como una sola aplicacion en Render usando Docker. El contenedor compila React, instala Flask y publica la web completa desde una unica URL.
-
-1. Crea una cuenta en GitHub y un repositorio nuevo.
-2. Sube esta carpeta completa al repositorio.
-3. Entra a Render y selecciona New > Web Service.
-4. Conecta tu repositorio de GitHub.
-5. Render detectara el `Dockerfile`. Si pregunta el entorno, selecciona Docker.
-6. Usa el plan Free para la demostracion academica.
-7. Presiona Deploy.
-
-Cuando termine, Render entregara una URL parecida a:
-
-```text
-https://evaluador-nist-iso.onrender.com
-```
-
-Nota: en el plan gratuito, SQLite y los archivos subidos pueden reiniciarse cuando el servicio se redepliega o se recrea. Para una entrega academica funciona bien como demostracion. Para una version real se recomienda usar PostgreSQL o un disco persistente.
-
-## Sustentacion
-
-Este MVP materializa la propuesta conceptual del evaluador automatico. El sistema demuestra el flujo principal: autenticacion, registro de empresa, seleccion del referente, cuestionario basado en criterios N-XX/I-XX, adjunto de evidencias, calculo ponderado, identificacion de brechas, dashboard y generacion de reporte ejecutivo en PDF.
-
-Los resultados de NIST representan alineacion interna con los criterios evaluados. Los resultados de ISO representan cumplimiento interno de los criterios seleccionados. Ningun porcentaje constituye certificacion oficial.
