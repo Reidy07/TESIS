@@ -36,6 +36,83 @@ Prototipo funcional para materializar el evaluador automatico de ciberseguridad 
 - Empresa: puede responder evaluaciones y cargar evidencias.
 - Revisor: puede consultar dashboard, resultados y reportes. No puede registrar empresas, crear evaluaciones ni subir evidencias.
 
+## Ejecutar el proyecto con Docker
+
+Esta es la forma recomendada para que otra persona pueda correr el sistema sin instalar Python, Node.js ni dependencias manualmente.
+
+### Requisitos
+
+La otra persona debe tener instalado:
+
+- Git: https://git-scm.com/downloads
+- Docker Desktop: https://www.docker.com/products/docker-desktop/
+
+Antes de ejecutar los comandos, Docker Desktop debe estar abierto.
+
+### Pasos
+
+1. Abrir una terminal.
+
+2. Descargar el repositorio:
+
+```powershell
+git clone https://github.com/Reidy07/TESIS.git
+```
+
+3. Entrar a la carpeta del proyecto:
+
+```powershell
+cd TESIS
+```
+
+4. Construir la imagen de Docker:
+
+```powershell
+docker build -t evaluador-nist-iso .
+```
+
+5. Ejecutar la aplicacion:
+
+```powershell
+docker run -p 10000:10000 evaluador-nist-iso
+```
+
+6. Abrir la aplicacion en el navegador:
+
+```text
+http://localhost:10000
+```
+
+### Usuarios de prueba
+
+```text
+Auditor:
+usuario: admin
+contrasena: admin123
+
+Revisor:
+usuario: profesor
+contrasena: tesis2026
+
+Empresa:
+usuario: empresa
+contrasena: empresa2026
+```
+
+### Si el puerto esta ocupado
+
+Si `10000` ya esta siendo usado, se puede correr con otro puerto local. Por ejemplo:
+
+```powershell
+docker run -p 8080:10000 evaluador-nist-iso
+```
+
+Y luego abrir:
+
+```text
+http://localhost:8080
+```
+
 ## Ejecutar backend
 
 ```powershell
