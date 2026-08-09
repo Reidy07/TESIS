@@ -33,13 +33,24 @@ import {
 } from "recharts";
 import "./styles.css";
 
-const API = "http://127.0.0.1:5000/api";
+const isViteDevServer = ["127.0.0.1", "localhost"].includes(window.location.hostname) && window.location.port === "5173";
+const API = isViteDevServer ? "http://127.0.0.1:5000/api" : "/api";
 const answerLabels = {
   si: "Cumple",
   parcial: "Cumple parcialmente",
   no: "No cumple",
   na: "No aplica",
 };
+const nistDashboardGroups = ["Govern", "Identify", "Protect", "Detect", "Respond", "Recover"];
+const isoDashboardGroups = [
+  "Contexto y direccion",
+  "Gestion de riesgos",
+  "Apoyo y operacion",
+  "Evaluacion y mejora",
+  "Activos y controles tecnologicos",
+  "Seguridad fisica y proveedores",
+  "Incidentes y continuidad",
+];
 const moduleObjectives = {
   Govern: "Evaluar como la empresa gestiona la ciberseguridad.",
   Identify: "Identificar activos, responsables y riesgos principales.",
@@ -81,6 +92,85 @@ function scoreLevel(value) {
   if (value >= 70) return { label: "Bueno", tone: "good" };
   if (value >= 50) return { label: "En mejora", tone: "warn" };
   return { label: "Critico", tone: "danger" };
+}
+
+function includesFramework(item, framework) {
+  return item?.frameworks === framework || item?.frameworks === "both";
+}
+
+function average(values) {
+  const validValues = values.filter((value) => Number.isFinite(value));
+  if (!validValues.length) return 0;
+  return Math.round(validValues.reduce((total, value) => total + value, 0) / validValues.length);
+}
+
+function aggregateGroupScores(items, framework, key, groups, fallbackLabel) {
+  const groupedValues = {};
+  groups.forEach((group) => {
+    const values = items
+      .filter((item) => includesFramework(item, framework))
+      .map((item) => item.results?.[key]?.[group])
+      .filter((value) => Number.isFinite(value));
+    if (values.length) groupedValues[group] = average(values);
+  });
+
+  if (!Object.keys(groupedValues).length && fallbackLabel) {
+    const fallbackValues = items
+      .filter((item) => includesFramework(item, framework))
+      .map((item) => item.results?.[framework.toLowerCase()])
+      .filter((value) => Number.isFinite(value) && value > 0);
+    if (fallbackValues.length) groupedValues[fallbackLabel] = average(fallbackValues);
+  }
+
+  return groupedValues;
+}
+
+function aggregateNistFunctions(items) {
+  const detailed = aggregateGroupScores(items, "NIST", "nist_functions", nistDashboardGroups, null);
+  if (Object.keys(detailed).length) return detailed;
+  return aggregateGroupScores(items, "NIST", "functions", nistDashboardGroups, null);
+}
+
+function aggregateDashboardResults(items, fallbackResults) {
+  if (!items.length) return fallbackResults || null;
+
+  const nistValues = items
+    .filter((item) => includesFramework(item, "NIST"))
+    .map((item) => item.results?.nist)
+    .filter((value) => Number.isFinite(value));
+  const isoValues = items
+    .filter((item) => includesFramework(item, "ISO"))
+    .map((item) => item.results?.iso)
+    .filter((value) => Number.isFinite(value));
+  const responseDistribution = { si: 0, parcial: 0, no: 0, na: 0 };
+
+  items.forEach((item) => {
+    Object.entries(item.results?.response_distribution || {}).forEach(([key, value]) => {
+      responseDistribution[key] = (responseDistribution[key] || 0) + value;
+    });
+  });
+
+  const nist = average(nistValues);
+  const iso = average(isoValues);
+  const selectedScores = [nistValues.length ? nist : null, isoValues.length ? iso : null].filter((value) => value !== null);
+  const compliance = average(selectedScores);
+
+  return {
+    compliance,
+    nist,
+    iso,
+    maturity: Math.max(1, Math.min(5, Math.round(average(items.map((item) => item.results?.maturity))))),
+    critical_gaps: items.reduce((total, item) => total + (item.results?.critical_gaps || 0), 0),
+    fulfilled_controls: items.reduce((total, item) => total + (item.results?.fulfilled_controls || 0), 0),
+    applicable_controls: items.reduce((total, item) => total + (item.results?.applicable_controls || 0), 0),
+    pending_controls: items.reduce((total, item) => total + (item.results?.pending_controls || 0), 0),
+    criteria_without_evidence: items.reduce((total, item) => total + (item.results?.criteria_without_evidence || 0), 0),
+    nist_functions: aggregateNistFunctions(items),
+    iso_areas: aggregateGroupScores(items, "ISO", "iso_areas", isoDashboardGroups, "ISO general"),
+    response_distribution: responseDistribution,
+    gaps: items.flatMap((item) => item.results?.gaps || []).slice(0, 12),
+    opportunities: items.flatMap((item) => item.results?.opportunities || item.results?.gaps || []).slice(0, 5),
+  };
 }
 
 function App() {
@@ -504,12 +594,15 @@ function Dashboard({ evaluations, latest }) {
     ? evaluations
     : evaluations.filter((item) => item.company === selectedCompany);
   const selectedLatest = filteredEvaluations[0] || latest;
-  const results = selectedLatest?.results;
+  const results = useMemo(
+    () => aggregateDashboardResults(filteredEvaluations, selectedLatest?.results),
+    [filteredEvaluations, selectedLatest]
+  );
   const nistData = Object.entries(results?.nist_functions || results?.functions || {})
-    .filter(([, value]) => value > 0)
+    .filter(([, value]) => Number.isFinite(value))
     .map(([name, value], index) => ({ name, value, fill: chartPalette[index % chartPalette.length] }));
   const isoData = Object.entries(results?.iso_areas || {})
-    .filter(([, value]) => value > 0)
+    .filter(([, value]) => Number.isFinite(value))
     .map(([name, value], index) => ({ name, value, fill: chartPalette[(index + 1) % chartPalette.length] }));
   const responseData = Object.entries(results?.response_distribution || {})
     .filter(([, value]) => value > 0)
@@ -651,6 +744,7 @@ function Dashboard({ evaluations, latest }) {
             <div><span>NIST</span><strong>{results?.nist || 0}%</strong></div>
             <div><span>ISO</span><strong>{results?.iso || 0}%</strong></div>
           </div>
+          {!isoData.length && <p className="muted">No hay datos ISO en las evaluaciones seleccionadas.</p>}
         </div>
       </section>
 
