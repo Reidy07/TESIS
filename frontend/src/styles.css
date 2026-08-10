@@ -483,6 +483,77 @@ h2 {
   border: 1px solid rgba(142, 216, 197, 0.28);
 }
 
+.dashboard-insights {
+  display: grid;
+  grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.9fr) minmax(0, 1.1fr);
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.insight-card {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  align-items: start;
+  gap: 12px;
+  min-height: 112px;
+  background: rgba(255, 255, 255, 0.065);
+  border: 1px solid rgba(142, 216, 197, 0.20);
+  border-radius: 8px;
+  color: #eef8f6;
+  padding: 16px;
+}
+
+.insight-card.primary {
+  background:
+    linear-gradient(135deg, rgba(47, 155, 124, 0.18), rgba(255, 255, 255, 0.06));
+}
+
+.insight-card.accent {
+  background:
+    linear-gradient(135deg, rgba(208, 139, 54, 0.18), rgba(255, 255, 255, 0.055));
+}
+
+.insight-card strong {
+  display: block;
+  color: #eef8f6;
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.insight-icon {
+  width: 40px;
+  height: 40px;
+  display: grid;
+  place-items: center;
+  background: rgba(142, 216, 197, 0.13);
+  border: 1px solid rgba(142, 216, 197, 0.25);
+  border-radius: 8px;
+  color: #8ed8c5;
+}
+
+.insight-card.accent .insight-icon {
+  background: rgba(208, 139, 54, 0.16);
+  border-color: rgba(208, 139, 54, 0.32);
+  color: #f0b25d;
+}
+
+.coverage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.coverage-chips span {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(142, 216, 197, 0.18);
+  border-radius: 999px;
+  color: #d9e8e6;
+  font-size: 12px;
+  font-weight: 900;
+  padding: 7px 9px;
+}
+
 .filter-heading {
   display: flex;
   align-items: center;
@@ -2099,6 +2170,7 @@ select {
   .dashboard-hero,
   .dashboard-score-stack,
   .dashboard-filter,
+  .dashboard-insights,
   .filter-control,
   .company-form,
   .metrics.compact,

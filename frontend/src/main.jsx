@@ -609,11 +609,27 @@ function Dashboard({ evaluations, latest }) {
     .map(([key, value]) => ({ name: answerLabels[key], value, fill: responsePalette[key] }));
   const opportunities = results?.opportunities || results?.gaps?.slice(0, 5) || [];
   const selectedCompanyName = selectedCompany === "all" ? "Todas las empresas" : selectedCompany;
+  const nistEvaluationCount = filteredEvaluations.filter((item) => includesFramework(item, "NIST")).length;
+  const isoEvaluationCount = filteredEvaluations.filter((item) => includesFramework(item, "ISO")).length;
+  const mixedEvaluationCount = filteredEvaluations.filter((item) => item.frameworks === "both").length;
+  const weakestArea = [...nistData, ...isoData]
+    .filter((item) => item.value < 70)
+    .sort((a, b) => a.value - b.value)[0];
   const nistLevel = scoreLevel(results?.nist || 0);
   const isoLevel = scoreLevel(results?.iso || 0);
   const latestDate = selectedLatest?.date || "Sin evaluaciones";
   const latestFramework = selectedLatest ? frameworkLabel(selectedLatest.frameworks) : "Sin referente";
   const recentEvaluations = showAllRecent ? filteredEvaluations : filteredEvaluations.slice(0, 5);
+  const executiveReading = filteredEvaluations.length
+    ? `El filtro consolida ${filteredEvaluations.length} evaluacion${filteredEvaluations.length === 1 ? "" : "es"}. NIST registra ${results?.nist || 0}% e ISO registra ${results?.iso || 0}% segun los criterios aplicables.`
+    : "Aun no hay evaluaciones para este filtro.";
+  const recommendedAction = !filteredEvaluations.length
+    ? "Registra una empresa y crea una evaluacion para comenzar el analisis."
+    : !isoEvaluationCount
+      ? "Crea una evaluacion ISO o mixta para alimentar el cumplimiento por area."
+      : weakestArea
+        ? `Prioriza ${weakestArea.name}, actualmente en ${weakestArea.value}%.`
+        : "Mantener seguimiento periodico y conservar evidencias actualizadas.";
 
   return (
     <div className="dashboard-suite">
@@ -673,6 +689,34 @@ function Dashboard({ evaluations, latest }) {
             <span>{filteredEvaluations.length === 1 ? "evaluacion" : "evaluaciones"}</span>
           </div>
         </div>
+      </section>
+
+      <section className="dashboard-insights">
+        <article className="insight-card primary">
+          <div className="insight-icon"><Gauge size={20} /></div>
+          <div>
+            <p className="eyebrow">Lectura ejecutiva</p>
+            <strong>{executiveReading}</strong>
+          </div>
+        </article>
+        <article className="insight-card">
+          <div className="insight-icon"><ShieldCheck size={20} /></div>
+          <div>
+            <p className="eyebrow">Cobertura del filtro</p>
+            <div className="coverage-chips">
+              <span>NIST: {nistEvaluationCount}</span>
+              <span>ISO: {isoEvaluationCount}</span>
+              <span>Mixtas: {mixedEvaluationCount}</span>
+            </div>
+          </div>
+        </article>
+        <article className="insight-card accent">
+          <div className="insight-icon"><AlertTriangle size={20} /></div>
+          <div>
+            <p className="eyebrow">Accion sugerida</p>
+            <strong>{recommendedAction}</strong>
+          </div>
+        </article>
       </section>
 
       <section className="metrics executive-metrics">
