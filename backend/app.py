@@ -415,22 +415,32 @@ def calculate_results(answers, frameworks="both"):
     }
 
 
+def score_level(value):
+    if value >= 85:
+        return "Solido"
+    if value >= 70:
+        return "Bueno"
+    if value >= 50:
+        return "En mejora"
+    return "Critico"
+
+
 def build_results_chart(results):
     data = [
-        ("NIST", results.get("nist", 0), colors.HexColor("#1b6b7a")),
-        ("ISO", results.get("iso", 0), colors.HexColor("#2f9b7c")),
+        ("Alineacion NIST", results.get("nist", 0), colors.HexColor("#1b6b7a")),
+        ("Cumplimiento ISO", results.get("iso", 0), colors.HexColor("#2f9b7c")),
     ]
-    drawing = Drawing(460, 95)
+    drawing = Drawing(490, 112)
     x_label = 10
-    x_bar = 86
-    bar_width = 280
-    y = 68
+    x_bar = 126
+    bar_width = 265
+    y = 78
     for label, value, color in data:
         drawing.add(String(x_label, y, label, fontSize=9, fillColor=colors.HexColor("#425b65")))
-        drawing.add(Rect(x_bar, y - 3, bar_width, 10, fillColor=colors.HexColor("#e4ece9"), strokeColor=None))
-        drawing.add(Rect(x_bar, y - 3, bar_width * (value / 100), 10, fillColor=color, strokeColor=None))
-        drawing.add(String(x_bar + bar_width + 12, y, f"{value}%", fontSize=9, fillColor=colors.HexColor("#153b50")))
-        y -= 26
+        drawing.add(Rect(x_bar, y - 5, bar_width, 13, fillColor=colors.HexColor("#e8f0ee"), strokeColor=None))
+        drawing.add(Rect(x_bar, y - 5, bar_width * (value / 100), 13, fillColor=color, strokeColor=None))
+        drawing.add(String(x_bar + bar_width + 12, y, f"{value}% - {score_level(value)}", fontSize=9, fillColor=colors.HexColor("#153b50")))
+        y -= 34
     return drawing
 
 
@@ -443,44 +453,46 @@ def framework_label(value):
 
 
 def build_group_chart(title, values, palette):
-    populated = [(name, value) for name, value in values.items() if value > 0]
-    height = max(60, 24 + (len(populated) * 24))
+    populated = [(name, value) for name, value in values.items()]
+    height = max(72, 28 + (len(populated) * 25))
     drawing = Drawing(480, height)
     drawing.add(String(4, height - 16, title, fontSize=11, fillColor=colors.HexColor("#153b50")))
     if not populated:
-        drawing.add(String(4, height - 40, "Sin datos para este referente.", fontSize=9, fillColor=colors.HexColor("#68808a")))
+        drawing.add(Rect(4, height - 55, 430, 28, fillColor=colors.HexColor("#f8fbfa"), strokeColor=colors.HexColor("#dbe5e2")))
+        drawing.add(String(16, height - 43, "Sin datos para este referente.", fontSize=9, fillColor=colors.HexColor("#68808a")))
         return drawing
 
-    y = height - 40
-    label_width = 132
-    bar_width = 250
+    y = height - 42
+    label_width = 150
+    bar_width = 228
     for index, (label, value) in enumerate(populated):
         color = colors.HexColor(palette[index % len(palette)])
-        drawing.add(String(4, y, label[:28], fontSize=8, fillColor=colors.HexColor("#425b65")))
-        drawing.add(Rect(label_width, y - 4, bar_width, 10, fillColor=colors.HexColor("#e4ece9"), strokeColor=None))
-        drawing.add(Rect(label_width, y - 4, bar_width * (value / 100), 10, fillColor=color, strokeColor=None))
-        drawing.add(String(label_width + bar_width + 10, y, f"{value}%", fontSize=8, fillColor=colors.HexColor("#153b50")))
-        y -= 24
+        drawing.add(String(4, y, label[:32], fontSize=7.8, fillColor=colors.HexColor("#425b65")))
+        drawing.add(Rect(label_width, y - 5, bar_width, 11, fillColor=colors.HexColor("#e8f0ee"), strokeColor=None))
+        drawing.add(Rect(label_width, y - 5, bar_width * (value / 100), 11, fillColor=color, strokeColor=None))
+        drawing.add(String(label_width + bar_width + 10, y, f"{value}%", fontSize=8.2, fillColor=colors.HexColor("#153b50")))
+        y -= 25
     return drawing
 
 
 def make_metric_cards(results):
     card_data = [
-        ("Alineacion NIST", f"{results.get('nist', 0)}%", "#1b6b7a"),
-        ("Cumplimiento ISO", f"{results.get('iso', 0)}%", "#2f9b7c"),
-        ("Brechas criticas", str(results.get("critical_gaps", 0)), "#c95f5f"),
-        ("Sin evidencia", str(results.get("criteria_without_evidence", 0)), "#d08b36"),
+        ("Alineacion NIST", f"{results.get('nist', 0)}%", score_level(results.get("nist", 0)), "#1b6b7a"),
+        ("Cumplimiento ISO", f"{results.get('iso', 0)}%", score_level(results.get("iso", 0)), "#2f9b7c"),
+        ("Brechas criticas", str(results.get("critical_gaps", 0)), "Prioridad alta", "#c95f5f"),
+        ("Sin evidencia", str(results.get("criteria_without_evidence", 0)), "Requiere soporte", "#d08b36"),
     ]
     row = []
-    for label, value, color in card_data:
+    for label, value, caption, color in card_data:
         row.append(
             Table(
                 [
-                    [Paragraph(f"<font color='{color}'><b>{escape(value)}</b></font>", ParagraphStyle("metricValue", fontSize=20, leading=22, alignment=TA_CENTER))],
-                    [Paragraph(escape(label), ParagraphStyle("metricLabel", fontSize=8, leading=10, alignment=TA_CENTER, textColor=colors.HexColor("#425b65")))],
+                    [Paragraph(f"<font color='{color}'><b>{escape(value)}</b></font>", ParagraphStyle("metricValue", fontSize=21, leading=23, alignment=TA_CENTER))],
+                    [Paragraph(escape(label), ParagraphStyle("metricLabel", fontSize=8.5, leading=10, alignment=TA_CENTER, textColor=colors.HexColor("#153b50")))],
+                    [Paragraph(escape(caption), ParagraphStyle("metricCaption", fontSize=7.5, leading=9, alignment=TA_CENTER, textColor=colors.HexColor("#68808a")))],
                 ],
                 colWidths=[116],
-                rowHeights=[26, 24],
+                rowHeights=[24, 16, 16],
             )
         )
     cards = Table([row], colWidths=[120, 120, 120, 120], hAlign="LEFT")
@@ -491,7 +503,7 @@ def make_metric_cards(results):
                 ("BOX", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
                 ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
                 ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f8fbfa")),
-                ("PADDING", (0, 0), (-1, -1), 8),
+                ("PADDING", (0, 0), (-1, -1), 7),
             ]
         )
     )
@@ -500,6 +512,58 @@ def make_metric_cards(results):
 
 def make_section_title(text, styles):
     return Paragraph(escape(text), styles["SectionTitle"])
+
+
+def standard_table_style(header_color="#153b50"):
+    return TableStyle(
+        [
+            ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor(header_color)),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("GRID", (0, 0), (-1, -1), 0.45, colors.HexColor("#dbe5e2")),
+            ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fbfa")]),
+            ("VALIGN", (0, 0), (-1, -1), "TOP"),
+            ("PADDING", (0, 0), (-1, -1), 7),
+        ]
+    )
+
+
+def make_executive_summary(evaluation, results, styles):
+    summary_text = (
+        f"La evaluacion de {escape(evaluation['company'])} registra una alineacion NIST de "
+        f"{results.get('nist', 0)}% y un cumplimiento ISO interno de {results.get('iso', 0)}%. "
+        f"El nivel de madurez calculado es {results.get('maturity', 1)}, con "
+        f"{results.get('pending_controls', 0)} brechas y {results.get('criteria_without_evidence', 0)} criterios sin evidencia."
+    )
+    action = "Mantener seguimiento periodico y actualizar evidencias."
+    gaps = results.get("gaps") or []
+    if gaps:
+        first_gap = gaps[0]
+        action = f"Priorizar {escape(first_gap.get('id', ''))} - {escape(first_gap.get('group', ''))}: {escape(first_gap.get('recommendation', ''))}"
+
+    table = Table(
+        [
+            [
+                Paragraph("<b>Lectura ejecutiva</b><br/>" + summary_text, styles["Body"]),
+                Paragraph("<b>Accion sugerida</b><br/>" + action, styles["Body"]),
+            ]
+        ],
+        colWidths=[240, 240],
+        hAlign="LEFT",
+    )
+    table.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (0, 0), colors.HexColor("#eef7f4")),
+                ("BACKGROUND", (1, 0), (1, 0), colors.HexColor("#fff7eb")),
+                ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#dbe5e2")),
+                ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
+                ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                ("PADDING", (0, 0), (-1, -1), 10),
+            ]
+        )
+    )
+    return table
 
 
 def evidence_rows(evidence):
@@ -521,10 +585,17 @@ def draw_page_frame(canvas, doc):
     canvas.saveState()
     width, height = letter
     canvas.setFillColor(colors.HexColor("#153b50"))
-    canvas.rect(0, height - 34, width, 34, stroke=0, fill=1)
+    canvas.rect(0, height - 40, width, 40, stroke=0, fill=1)
+    canvas.setFillColor(colors.HexColor("#2f9b7c"))
+    canvas.rect(0, height - 40, 118, 40, stroke=0, fill=1)
     canvas.setFillColor(colors.white)
-    canvas.setFont("Helvetica-Bold", 9)
-    canvas.drawString(42, height - 21, "Evaluador automatico de ciberseguridad para PYMES")
+    canvas.setFont("Helvetica-Bold", 10)
+    canvas.drawString(42, height - 23, "Evaluador automatico de ciberseguridad")
+    canvas.setFont("Helvetica", 7.5)
+    canvas.drawRightString(width - 42, height - 23, "NIST CSF 2.0 / ISO IEC 27001")
+    canvas.setStrokeColor(colors.HexColor("#dbe5e2"))
+    canvas.setLineWidth(0.4)
+    canvas.line(42, 34, width - 42, 34)
     canvas.setFont("Helvetica", 8)
     canvas.setFillColor(colors.HexColor("#68808a"))
     canvas.drawRightString(width - 42, 22, f"Pagina {doc.page}")
@@ -748,11 +819,20 @@ def report(evaluation_id):
             "ReportTitle",
             parent=styles["Title"],
             fontName="Helvetica-Bold",
-            fontSize=20,
-            leading=24,
-            textColor=colors.HexColor("#153b50"),
+            fontSize=18,
+            leading=22,
+            textColor=colors.white,
             alignment=TA_LEFT,
-            spaceAfter=8,
+            spaceAfter=2,
+        )
+    )
+    styles.add(
+        ParagraphStyle(
+            "HeroSubtitle",
+            parent=styles["Normal"],
+            fontSize=8.5,
+            leading=11,
+            textColor=colors.HexColor("#d9e8e6"),
         )
     )
     styles.add(
@@ -800,14 +880,42 @@ def report(evaluation_id):
         )
     )
 
-    story = [
-        Paragraph("Reporte ejecutivo de evaluacion", styles["ReportTitle"]),
-        Paragraph(
-            "Evaluador automatico de ciberseguridad para PYMES basado en NIST CSF 2.0 e ISO/IEC 27001",
-            styles["SmallMuted"],
-        ),
-        Spacer(1, 12),
-    ]
+    hero = Table(
+        [
+            [
+                Paragraph("Reporte ejecutivo de evaluacion", styles["ReportTitle"]),
+                Paragraph(
+                    f"<b>{escape(evaluation['company'])}</b><br/>{escape(evaluation['date'])}",
+                    ParagraphStyle("HeroInfo", fontSize=9, leading=12, textColor=colors.white, alignment=TA_CENTER),
+                ),
+            ],
+            [
+                Paragraph(
+                    "Evaluador automatico de ciberseguridad para PYMES basado en NIST CSF 2.0 e ISO/IEC 27001",
+                    styles["HeroSubtitle"],
+                ),
+                Paragraph(
+                    escape(framework_label(evaluation.get("frameworks", "both"))),
+                    ParagraphStyle("HeroFramework", fontSize=8, leading=10, textColor=colors.HexColor("#d9e8e6"), alignment=TA_CENTER),
+                ),
+            ],
+        ],
+        colWidths=[350, 130],
+        hAlign="LEFT",
+    )
+    hero.setStyle(
+        TableStyle(
+            [
+                ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#153b50")),
+                ("BACKGROUND", (1, 0), (1, -1), colors.HexColor("#1b6b7a")),
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+                ("PADDING", (0, 0), (-1, -1), 12),
+                ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#153b50")),
+            ]
+        )
+    )
+
+    story = [hero, Spacer(1, 12)]
 
     meta = [
         [
@@ -839,6 +947,8 @@ def report(evaluation_id):
     story.extend([
         meta_table,
         Spacer(1, 12),
+        make_executive_summary(evaluation, results, styles),
+        Spacer(1, 12),
         Paragraph(
             "Los resultados representan una evaluacion interna basada en los criterios seleccionados para este modelo "
             "y no constituyen una certificacion oficial de NIST o ISO/IEC 27001.",
@@ -864,18 +974,7 @@ def report(evaluation_id):
         ["No aplica", str(response_distribution.get("na", 0))],
     ]
     response_table = Table(response_summary, hAlign="LEFT", colWidths=[210, 90])
-    response_table.setStyle(
-        TableStyle(
-            [
-                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#153b50")),
-                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
-                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fbfa")]),
-                ("PADDING", (0, 0), (-1, -1), 7),
-            ]
-        )
-    )
+    response_table.setStyle(standard_table_style())
     story.extend([Spacer(1, 10), make_section_title("Distribucion de respuestas", styles), response_table])
 
     evidence_data = evidence_rows(evidence)
@@ -887,19 +986,7 @@ def report(evaluation_id):
             colWidths=[70, 420],
             repeatRows=1,
         )
-        evidence_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#153b50")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fbfa")]),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("PADDING", (0, 0), (-1, -1), 7),
-                ]
-            )
-        )
+        evidence_table.setStyle(standard_table_style())
         story.append(evidence_table)
     else:
         story.append(Paragraph("No se registraron evidencias para esta evaluacion.", styles["Body"]))
@@ -921,19 +1008,7 @@ def report(evaluation_id):
                 ]
             )
         gap_table = Table(gap_rows, hAlign="LEFT", colWidths=[62, 112, 316], repeatRows=1)
-        gap_table.setStyle(
-            TableStyle(
-                [
-                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#153b50")),
-                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-                    ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-                    ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#dbe5e2")),
-                    ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f8fbfa")]),
-                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
-                    ("PADDING", (0, 0), (-1, -1), 7),
-                ]
-            )
-        )
+        gap_table.setStyle(standard_table_style("#1b6b7a"))
         story.append(gap_table)
     else:
         story.append(Paragraph("No se identificaron brechas relevantes en la evaluacion.", styles["Body"]))
