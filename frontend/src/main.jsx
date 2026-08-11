@@ -214,30 +214,60 @@ function App() {
     <div className="app-shell">
       <aside className="sidebar">
         <div className="brand">
-          <ShieldCheck size={28} />
+          <div className="brand-mark">
+            <ShieldCheck size={24} />
+          </div>
           <div>
             <strong>Evaluador TSI</strong>
             <span>NIST CSF + ISO 27001</span>
           </div>
         </div>
-        <button className={view === "dashboard" ? "nav active" : "nav"} onClick={() => setView("dashboard")}>
-          <BarChart3 size={18} /> Dashboard
-        </button>
-        {canCreateEvaluation && (
-          <button className={view === "new" ? "nav active" : "nav"} onClick={() => setView("new")}>
-            <Plus size={18} /> Nueva evaluacion
+
+        <div className="sidebar-status">
+          <div className="status-dot" />
+          <div>
+            <span>Sesion activa</span>
+            <strong>{user.role}</strong>
+          </div>
+        </div>
+
+        <nav className="nav-group" aria-label="Navegacion principal">
+          <span className="nav-section-label">Modulo principal</span>
+          <button className={view === "dashboard" ? "nav active" : "nav"} onClick={() => setView("dashboard")}>
+            <BarChart3 size={18} />
+            <span>Dashboard</span>
           </button>
-        )}
-        {canManageCompanies && (
-          <button className={view === "companies" ? "nav active" : "nav"} onClick={() => setView("companies")}>
-            <ClipboardCheck size={18} /> Empresas
+          {canCreateEvaluation && (
+            <button className={view === "new" ? "nav active" : "nav"} onClick={() => setView("new")}>
+              <Plus size={18} />
+              <span>Nueva evaluacion</span>
+            </button>
+          )}
+          {canManageCompanies && (
+            <button className={view === "companies" ? "nav active" : "nav"} onClick={() => setView("companies")}>
+              <ClipboardCheck size={18} />
+              <span>Empresas</span>
+            </button>
+          )}
+          <button className={view === "report" ? "nav active" : "nav"} onClick={() => setView("report")}>
+            <FileText size={18} />
+            <span>Reporte</span>
           </button>
-        )}
-        <button className={view === "report" ? "nav active" : "nav"} onClick={() => setView("report")}>
-          <FileText size={18} /> Reporte
-        </button>
+        </nav>
+
+        <div className="sidebar-card">
+          <div className="sidebar-card-icon">
+            <LockKeyhole size={18} />
+          </div>
+          <div>
+            <strong>Control academico</strong>
+            <span>{canCreateEvaluation ? "Puede registrar y evaluar." : "Solo consulta resultados."}</span>
+          </div>
+        </div>
+
         <button className="nav logout" onClick={() => setUser(null)}>
-          <LogOut size={18} /> Salir
+          <LogOut size={18} />
+          <span>Salir</span>
         </button>
       </aside>
 
@@ -247,7 +277,7 @@ function App() {
             <p className="eyebrow">Prototipo funcional</p>
             <h1>Evaluador automatico NIST CSF 2.0 e ISO 27001</h1>
           </div>
-          <div className="user-pill">{user.name} · {user.role}</div>
+          <div className="user-pill">{user.name} - {user.role}</div>
         </header>
 
         {!canCreateEvaluation && <ReadOnlyNotice />}
